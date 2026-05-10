@@ -3846,7 +3846,8 @@ function TeacherControls({
   };
 
   return (
-    <motion.div 
+    <>
+    <motion.div
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t-2 border-turquoise/30 z-[150] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-4 sm:p-6"
@@ -3981,6 +3982,7 @@ function TeacherControls({
         </motion.div>
       </div>
     )}
+    </>
   );
 }
 
