@@ -23,7 +23,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -3726,9 +3726,12 @@ function PasscodeModal({
 }) {
   const [error, setError] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (attempt.toLowerCase() === 'hawaii') {
+    const encoded = new TextEncoder().encode(attempt.toLowerCase());
+    const buf = await crypto.subtle.digest('SHA-256', encoded);
+    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    if (hex === '195f33b50fa62ef2bd3d89227ecc1219419e3b907579718541f22cd1b1f1f5e4') {
       onVerify(true);
       setError(false);
     } else {
@@ -3807,12 +3810,12 @@ function PasscodeModal({
   );
 }
 
-function TeacherControls({ 
-  currentScene, 
-  onJump, 
-  onExit 
-}: { 
-  currentScene: SceneId, 
+function TeacherControls({
+  currentScene,
+  onJump,
+  onExit
+}: {
+  currentScene: SceneId,
   onJump: (id: SceneId) => void,
   onExit: () => void
 }) {
@@ -3820,6 +3823,27 @@ function TeacherControls({
   const currentIndex = allScenes.findIndex(s => s.id === currentScene);
   const prevScene = allScenes[currentIndex - 1];
   const nextScene = allScenes[currentIndex + 1];
+
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [students, setStudents] = useState<any[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+
+  const loadStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const q = query(collection(db, 'journeys'), orderBy('timestamp', 'desc'));
+      const snap = await getDocs(q);
+      setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      setStudents([]);
+    }
+    setLoadingStudents(false);
+  };
+
+  const openDashboard = () => {
+    setShowDashboard(true);
+    loadStudents();
+  };
 
   return (
     <motion.div 
@@ -3875,15 +3899,88 @@ function TeacherControls({
           </button>
         </div>
 
-        <button 
-          onClick={onExit}
-          className="flex items-center gap-2 px-6 py-3 bg-coral text-white rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-coral/20 hover:bg-deep-sea transition-all active:scale-95 font-display"
-        >
-          <X size={16} />
-          Exit Preview
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openDashboard}
+            className="flex items-center gap-2 px-6 py-3 bg-turquoise/20 border-2 border-turquoise text-turquoise rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-turquoise hover:text-white transition-all font-display"
+          >
+            <BookOpen size={16} />
+            Student Results
+          </button>
+          <button
+            onClick={onExit}
+            className="flex items-center gap-2 px-6 py-3 bg-coral text-white rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-coral/20 hover:bg-deep-sea transition-all active:scale-95 font-display"
+          >
+            <X size={16} />
+            Exit Preview
+          </button>
+        </div>
       </div>
     </motion.div>
+
+    {showDashboard && (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-deep-sea/60 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[80vh] flex flex-col overflow-hidden"
+        >
+          <div className="flex items-center justify-between p-6 border-b border-sand-dark">
+            <div>
+              <h2 className="text-2xl font-serif text-deep-sea">Student Results</h2>
+              <p className="text-xs text-text-muted font-display uppercase tracking-widest mt-1">{students.length} inzending{students.length !== 1 ? 'en' : ''}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={loadStudents} className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-turquoise border border-turquoise rounded-xl hover:bg-turquoise hover:text-white transition-all font-display">
+                Refresh
+              </button>
+              <button onClick={() => setShowDashboard(false)} className="p-2 rounded-xl hover:bg-sand transition-colors">
+                <X size={20} className="text-deep-sea" />
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-auto flex-1 p-6">
+            {loadingStudents ? (
+              <div className="flex items-center justify-center py-20 text-text-muted font-serif italic">Loading...</div>
+            ) : students.length === 0 ? (
+              <div className="flex items-center justify-center py-20 text-text-muted font-serif italic">Nog geen inzendingen.</div>
+            ) : (
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="text-left">
+                    <th className="pb-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Naam</th>
+                    <th className="pb-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Klas</th>
+                    <th className="pb-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Spirit Animal</th>
+                    <th className="pb-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Naam dier</th>
+                    <th className="pb-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Waarom Hawaii?</th>
+                    <th className="pb-3 pr-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Opgemerkt</th>
+                    <th className="pb-3 text-[10px] font-bold uppercase tracking-widest text-text-muted font-display border-b border-sand-dark">Hawaiiaans woord</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((s, i) => (
+                    <tr key={s.id} className={i % 2 === 0 ? 'bg-sand/20' : ''}>
+                      <td className="py-3 pr-4 font-serif text-deep-sea">{s.firstName || '—'}</td>
+                      <td className="py-3 pr-4 font-display text-xs text-text-muted">{s.classGroup || '—'}</td>
+                      <td className="py-3 pr-4">
+                        <span className="px-2 py-1 bg-turquoise/10 text-turquoise rounded-lg text-xs font-bold font-display">
+                          {s.companionType || '—'}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4 font-serif italic text-text-muted text-xs">{s.companionName || '—'}</td>
+                      <td className="py-3 pr-4 text-xs text-text-main max-w-[160px]">{s.answers?.q1 || '—'}</td>
+                      <td className="py-3 pr-4 text-xs text-text-main max-w-[160px]">{s.answers?.q2 || '—'}</td>
+                      <td className="py-3 text-xs font-bold text-deep-sea">{s.answers?.q3 || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    )}
   );
 }
 
