@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Outfit:wght@100..900&family=Inter:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+
+  /* Hawaii Journey Palette */
+  --color-sand: #f8f3eb;
+  --color-sand-dark: #e8dfd0;
+  --color-turquoise: #48c9b0;
+  --color-deep-sea: #1a3a5f;
+  --color-coral: #ff7f50;
+  --color-palm: #2d5a27;
+  --color-volcanic: #2c2c2c;
+
+  /* Refined Text Colors for Readability */
+  --color-text-main: #2d3436; /* Volcanic charcoal-ish, warm and dark */
+  --color-text-muted: #4a4a4a; /* Darker muted text */
+}
+
+@layer base {
+  body {
+    @apply antialiased bg-sand text-text-main selection:bg-turquoise/30;
+  }
+}
+
+/* Tropical Journey Styles */
+
+.journal-card {
+  @apply bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-white/50 shadow-xl shadow-deep-sea/5;
+}
+
+.tropical-gradient {
+  background: linear-gradient(135deg, var(--color-sand) 0%, #ffffff 100%);
+}
+
+.ocean-gradient {
+  background: linear-gradient(to bottom, #48c9b0 0%, #1a3a5f 100%);
+}
+
+/* Subtle decorative elements */
+.leaf-shadow {
+  filter: drop-shadow(0 10px 15px rgba(45, 90, 39, 0.1));
+}
+
+/* Calm, slow animations for classroom focus */
+@keyframes slow-fade-in {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-calm-in {
+  animation: slow-fade-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+.animate-subtle-float {
+  animation: subtle-float 8s ease-in-out infinite;
+}
+
+@keyframes wave-flow {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-25%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-wave {
+  animation: wave-flow 20s ease-in-out infinite;
+}
+
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-sand-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-turquoise);
+}

@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "StudentJourney": {
+      "title": "Student Journey Record",
+      "description": "Record of a student's identification and companion choice.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string", "description": "Student's first name" },
+        "classGroup": { "type": "string", "description": "Student's class" },
+        "spiritAnimal": { "type": "string", "description": "Chosen spirit animal type" },
+        "companionName": { "type": "string", "description": "Name given to the companion" },
+        "completed": { "type": "boolean", "description": "Whether the lesson was completed" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the choice was made" }
+      },
+      "required": ["firstName", "classGroup", "spiritAnimal", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/journeys/{journeyId}": {
+      "schema": "StudentJourney",
+      "description": "Collection of student journey records"
+    }
+  }
+}
