@@ -23,7 +23,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -3831,10 +3831,12 @@ function TeacherControls({
   const loadStudents = async () => {
     setLoadingStudents(true);
     try {
-      const q = query(collection(db, 'journeys'), orderBy('timestamp', 'desc'));
-      const snap = await getDocs(q);
-      setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch {
+      const snap = await getDocs(collection(db, 'journeys'));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() as any }));
+      data.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
+      setStudents(data);
+    } catch (err) {
+      console.error('Dashboard load error:', err);
       setStudents([]);
     }
     setLoadingStudents(false);
@@ -3966,7 +3968,7 @@ function TeacherControls({
                       <td className="py-3 pr-4 font-display text-xs text-text-muted">{s.classGroup || '—'}</td>
                       <td className="py-3 pr-4">
                         <span className="px-2 py-1 bg-turquoise/10 text-turquoise rounded-lg text-xs font-bold font-display">
-                          {s.companionType || '—'}
+                          {s.spiritAnimal || '—'}
                         </span>
                       </td>
                       <td className="py-3 pr-4 font-serif italic text-text-muted text-xs">{s.companionName || '—'}</td>
