@@ -384,6 +384,7 @@ export default function App() {
   const [hawaiianRecallFeedback, setHawaiianRecallFeedback] = useState(false);
   const [gapFillAnswers, setGapFillAnswers] = useState<Record<string, string>>({});
   const [gapFillFeedback, setGapFillFeedback] = useState(false);
+  const [dragWord, setDragWord] = useState<string>('');
   const [villageCluesAnswers, setVillageCluesAnswers] = useState<string[]>([]);
   const [villageCluesFeedback, setVillageCluesFeedback] = useState(false);
   const [villageCluesAttempted, setVillageCluesAttempted] = useState(false);
@@ -1382,21 +1383,46 @@ export default function App() {
                   <div className="md:col-span-2 space-y-6">
                     <div className="journal-card p-8 sm:p-12">
                     <div className="space-y-8 text-text-main leading-relaxed font-serif text-lg sm:text-xl">
-                      <p>
-                        You arrive in <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[1] || '__(1)__'}</span> after a long flight. It is a group of <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[2] || '__(2)__'}</span> in the Pacific Ocean and also the 50th <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[3] || '__(3)__'}</span> of the United States.
-                      </p>
-                      <p>
-                        The capital city is <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[4] || '__(4)__'}</span> on Oʻahu. People speak English, but Hawaiian is also an official <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[5] || '__(5)__'}</span>.
-                      </p>
-                      <p>
-                        Hawaiʻi is famous for beaches, surfing, and <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[6] || '__(6)__'}</span>. It is also known for its culture, nature, and military <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[7] || '__(7)__'}</span>.
-                      </p>
-                      <p>
-                        During the bus ride, you see tropical plants, hills, and the <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[8] || '__(8)__'}</span>. Your guide explains that Hawaiʻi has strong <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[9] || '__(9)__'}</span>, with many different plants and animals.
-                      </p>
-                      <p>
-                        Soon, you arrive at your wooden <span className="inline-block min-w-[100px] border-b-2 border-turquoise/30 text-turquoise font-bold text-center px-2">{gapFillAnswers[10] || '__(10)__'}</span> in nature.
-                      </p>
+                      {(() => {
+                        const Gap = ({ n }: { n: number }) => {
+                          const filled = gapFillAnswers[n];
+                          return (
+                            <span
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                if (!dragWord || gapFillFeedback) return;
+                                setGapFillAnswers(prev => ({ ...prev, [n]: dragWord }));
+                                setDragWord('');
+                                setGapFillFeedback(false);
+                              }}
+                              onClick={() => {
+                                if (filled && !gapFillFeedback) {
+                                  setGapFillAnswers(prev => { const next = { ...prev }; delete next[n]; return next; });
+                                  setGapFillFeedback(false);
+                                }
+                              }}
+                              title={filled ? 'Klik om te verwijderen' : 'Sleep een woord hierheen'}
+                              className={`inline-block min-w-[100px] border-b-2 text-center px-2 transition-all
+                                ${filled
+                                  ? 'border-turquoise text-turquoise font-bold bg-turquoise/10 rounded-lg cursor-pointer hover:bg-coral/10 hover:border-coral hover:text-coral'
+                                  : 'border-turquoise/30 text-turquoise/50 font-bold'
+                                } ${dragWord && !filled ? 'border-turquoise border-dashed bg-turquoise/5' : ''}`}
+                            >
+                              {filled || `__(${n})__`}
+                            </span>
+                          );
+                        };
+                        return (
+                          <>
+                            <p>You arrive in <Gap n={1} /> after a long flight. It is a group of <Gap n={2} /> in the Pacific Ocean and also the 50th <Gap n={3} /> of the United States.</p>
+                            <p>The capital city is <Gap n={4} /> on Oʻahu. People speak English, but Hawaiian is also an official <Gap n={5} />.</p>
+                            <p>Hawaiʻi is famous for beaches, surfing, and <Gap n={6} />. It is also known for its culture, nature, and military <Gap n={7} />.</p>
+                            <p>During the bus ride, you see tropical plants, hills, and the <Gap n={8} />. Your guide explains that Hawaiʻi has strong <Gap n={9} />, with many different plants and animals.</p>
+                            <p>Soon, you arrive at your wooden <Gap n={10} /> in nature.</p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -1406,30 +1432,28 @@ export default function App() {
                       <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-display">Word Bank</h3>
                       <div className="flex flex-wrap gap-2">
                         {[
-                          'Hawaiʻi', 'islands', 'state', 'Honolulu', 'language', 
+                          'Hawaiʻi', 'islands', 'state', 'Honolulu', 'language',
                           'volcanoes', 'history', 'ocean', 'biodiversity', 'cabin'
-                        ].map(word => (
-                          <button
-                            key={word}
-                            disabled={gapFillFeedback}
-                            onClick={() => {
-                              // Find first empty gap
-                              const nextGap = [1,2,3,4,5,6,7,8,9,10].find(i => !gapFillAnswers[i]);
-                              if (nextGap) {
-                                setGapFillAnswers(prev => ({ ...prev, [nextGap]: word }));
-                                setGapFillFeedback(false);
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border ${
-                              Object.values(gapFillAnswers).includes(word)
-                                ? 'bg-sand/30 border-sand-dark text-deep-sea/20'
-                                : 'bg-white border-sand-dark text-text-main hover:border-turquoise hover:text-turquoise'
-                            }`}
-                          >
-                            {word}
-                          </button>
-                        ))}
+                        ].map(word => {
+                          const used = Object.values(gapFillAnswers).includes(word);
+                          return (
+                            <div
+                              key={word}
+                              draggable={!used && !gapFillFeedback}
+                              onDragStart={() => setDragWord(word)}
+                              onDragEnd={() => setDragWord('')}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border select-none
+                                ${used
+                                  ? 'bg-sand/30 border-sand-dark text-deep-sea/20 cursor-not-allowed'
+                                  : 'bg-white border-sand-dark text-text-main hover:border-turquoise hover:text-turquoise cursor-grab active:cursor-grabbing'
+                                }`}
+                            >
+                              {word}
+                            </div>
+                          );
+                        })}
                       </div>
+                      <p className="text-[10px] text-text-muted font-display">Sleep een woord naar een gat · Klik op een gat om het te verwijderen</p>
                       <button 
                         onClick={() => {
                           setGapFillAnswers({});
